@@ -83,7 +83,10 @@ When a user asks a question, follow these steps:
 
             let chatHistory = [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser question: " + input }] }];
             const payload = { contents: chatHistory };
-            const apiKey = ""; // API key is handled by the environment
+            
+            // UPDATED: Read the API key from the environment variable
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             const response = await fetch(apiUrl, {
@@ -92,7 +95,7 @@ When a user asks a question, follow these steps:
                 body: JSON.stringify(payload)
             });
 
-            if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+            if (!response.ok) throw new Error(`API request failed with status ${response.status}. Check your API key and permissions in the Google Cloud Console.`);
 
             const result = await response.json();
             
@@ -105,7 +108,7 @@ When a user asks a question, follow these steps:
 
         } catch (error) {
             console.error("Error fetching AI response:", error);
-            setMessages(prev => [...prev, { text: `Error: ${error.message}. Please check the console for details.`, isUser: false }]);
+            setMessages(prev => [...prev, { text: `${error.message}`, isUser: false }]);
         } finally {
             setIsLoading(false);
         }
