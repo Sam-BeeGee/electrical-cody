@@ -69,6 +69,13 @@ const ChatInterface = ({ onNewChat }) => {
 
         // --- AI Integration with Auto-Topic Detection ---
         try {
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+            // NEW: Add a check to see if the API key is available
+            if (!apiKey) {
+                throw new Error("API key is missing. Please make sure you have set up the VITE_GEMINI_API_KEY environment variable in your Vercel project settings.");
+            }
+            
             const systemPrompt = `You are "Electrical Cody," an AI virtual assistant with the knowledge and persona of a seasoned Master Electrician. Your goal is to provide expert, safe, and practical advice to both field electricians and electrical detailers/designers.
 
 When a user asks a question, follow these steps:
@@ -83,9 +90,6 @@ When a user asks a question, follow these steps:
 
             let chatHistory = [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser question: " + input }] }];
             const payload = { contents: chatHistory };
-            
-            // UPDATED: Read the API key from the environment variable
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
