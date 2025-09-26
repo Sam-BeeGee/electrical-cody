@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Markdown from 'markdown-to-jsx';
 
 // --- Helper Components ---
 
@@ -9,19 +10,19 @@ const SendIcon = () => (
     </svg>
 );
 
-// Icon for the AI assistant, "Electrical Cody"
+// Updated icon for the AI assistant, "Electrical Cody"
 const BotIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="#4A90E2" />
-        <path d="M13 4L6 14H11L11 20L18 10H13L13 4Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="#4A90E2"/>
+        <path d="M17 6L9 18H15L15 26L23 14H17L17 6Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 
-// Icon for the user
+// Updated icon for the user
 const UserIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fillRule="evenodd" clipRule="evenodd" d="M12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12ZM12 10C13.1046 10 14 9.10457 14 8C14 6.89543 13.1046 6 12 6C10.8954 6 10 6.89543 10 8C10 9.10457 10.8954 10 12 10Z" fill="currentColor" opacity="0.5"/>
-        <path d="M5.00411 20.6C5.55321 17.2337 8.48204 15 12 15C15.518 15 18.4468 17.2337 18.9959 20.6C19.1285 21.3364 18.5215 22 17.7621 22H6.23789C5.47851 22 4.87153 21.3364 5.00411 20.6Z" fill="currentColor" opacity="0.5"/>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.6"/>
+        <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="currentColor" opacity="0.6"/>
     </svg>
 );
 
@@ -34,6 +35,18 @@ const NewChatIcon = () => (
     </svg>
 );
 
+// --- New Header Component ---
+const Header = () => (
+    <header className="flex items-center p-4 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-3">
+            <BotIcon />
+            <div>
+                <h1 className="text-lg font-bold text-gray-800">Electrical Cody</h1>
+                <p className="text-sm text-gray-500">Your AI Master Electrician</p>
+            </div>
+        </div>
+    </header>
+);
 
 // --- Main Components ---
 
@@ -47,13 +60,13 @@ const ChatInterface = ({ onNewChat }) => {
     // Effect to add initial welcome message from Electrical Cody
     useEffect(() => {
         setMessages([
-            { 
-                text: "Hello! I'm Electrical Cody, your virtual master electrician. Ask me about code, calculations, or Revit. How can I help?", 
-                isUser: false 
+            {
+                text: "Hello! I'm Electrical Cody, your virtual master electrician. Ask me about code, calculations, or Revit. How can I help?",
+                isUser: false
             }
         ]);
     }, []);
-    
+
     // Effect to scroll to the bottom of the chat on new messages
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,26 +84,26 @@ const ChatInterface = ({ onNewChat }) => {
         try {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-            // NEW: Add a check to see if the API key is available
             if (!apiKey) {
                 throw new Error("API key is missing. Please make sure you have set up the VITE_GEMINI_API_KEY environment variable in your Vercel project settings.");
             }
-            
-            const systemPrompt = `You are "Electrical Cody," an AI virtual assistant with the knowledge and persona of a seasoned Master Electrician. Your goal is to provide expert, safe, and practical advice to both field electricians and electrical detailers/designers.
 
-When a user asks a question, follow these steps:
-1.  **Analyze the User's Need:** Is this a field electrician asking about installation, or a detailer asking about design/modeling? Tailor your response accordingly.
+            const systemPrompt = `You are "Electrical Cody," an AI virtual assistant with the knowledge and persona of a seasoned Master Electrician. Your goal is to be an expert in electrical code, theory, installation, project management, and construction management. When a user asks a question, follow these steps:
+1.  **Analyze the User's Need:** Is this a field electrician asking about installation, a project manager asking about scheduling, or a detailer asking about design/modeling? Tailor your response accordingly.
 2.  **Determine the Topic:**
-    * **Code Interpretation:** If it's about code, reference the NEC 2023 by default, or the specific state code (WA, OR, CA) if mentioned. Always cite the article (e.g., NEC 210.52(C)(1)).
-    * **Electrical Calculations:** If asked to perform a calculation (e.g., voltage drop, conduit fill, box fill, load calculations, motor branch circuits), perform the calculation accurately and, most importantly, show the step-by-step process, including the formulas and code articles used.
+    * **Code Interpretation:** If it's about code, reference the NEC 2023 by default, or the specific state code (WA, OR, CA) if mentioned. Always cite the article (e.g., NEC 210.52(C)(1)). Use markdown for code blocks.
+    * **Electrical Calculations:** If asked to perform a calculation (e.g., voltage drop, conduit fill, box fill, load calculations, motor branch circuits), perform the calculation accurately and, most importantly, show the step-by-step process, including the formulas and code articles used. Use markdown for code blocks.
+    * **Installation Best Practices:** Provide practical, safe, and efficient installation guidance for common electrical systems and equipment.
+    * **Project Management:** Offer insights on project planning, scheduling, resource allocation, and risk management specific to electrical construction.
+    * **Construction Management:** Advise on site logistics, team coordination, safety protocols, and quality control for electrical projects.
     * **Revit/VDC:** If it's about Revit, provide clear, practical workflows for electrical detailers.
     * **Electrical Theory:** If it's about a fundamental concept (Ohm's Law, 3-phase power, etc.), explain it clearly and concisely, as a master electrician would to an apprentice.
-3.  **Prioritize Safety and Best Practices:** Frame your answers with a focus on safety and professional, code-compliant installation methods.
-4.  **Be Clear and Concise:** Provide accurate, easy-to-understand answers. Avoid jargon where possible, or explain it if necessary.`;
+3.  **Prioritize Safety and Best Practices:** Frame your answers with a focus on safety, efficiency, and professional, code-compliant methods.
+4.  **Be Clear and Concise:** Provide accurate, easy-to-understand answers. Use markdown for formatting. Avoid jargon where possible, or explain it if necessary.`;
 
             let chatHistory = [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser question: " + input }] }];
             const payload = { contents: chatHistory };
-            
+
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             const response = await fetch(apiUrl, {
@@ -102,12 +115,12 @@ When a user asks a question, follow these steps:
             if (!response.ok) throw new Error(`API request failed with status ${response.status}. Check your API key and permissions in the Google Cloud Console.`);
 
             const result = await response.json();
-            
+
             let botResponse = "Sorry, I couldn't get a response. Please try again.";
             if (result.candidates && result.candidates.length > 0 && result.candidates[0].content?.parts?.length > 0) {
                 botResponse = result.candidates[0].content.parts[0].text;
             }
-            
+
             setMessages(prev => [...prev, { text: botResponse, isUser: false }]);
 
         } catch (error) {
@@ -121,7 +134,7 @@ When a user asks a question, follow these steps:
     return (
         <div className="flex flex-col h-full">
             {/* Message Display */}
-            <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+            <div className="flex-1 p-6 space-y-6 overflow-y-auto" aria-live="polite">
                 {messages.map((msg, index) => (
                     <div key={index} className={`flex items-start gap-3 ${msg.isUser ? 'justify-end' : ''}`}>
                         {!msg.isUser && (
@@ -130,7 +143,13 @@ When a user asks a question, follow these steps:
                             </div>
                         )}
                         <div className={`max-w-xl p-3 px-4 rounded-2xl ${msg.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                            <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
+                            {msg.isUser ? (
+                                <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
+                            ) : (
+                                <div className="prose prose-sm max-w-none">
+                                    <Markdown>{msg.text}</Markdown>
+                                </div>
+                            )}
                         </div>
                          {msg.isUser && (
                             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
@@ -174,11 +193,13 @@ When a user asks a question, follow these steps:
                         placeholder='Ask a code question, run a calculation, or get Revit help...'
                         className="flex-1 p-3 bg-transparent border-l border-gray-200 focus:ring-0 text-sm"
                         disabled={isLoading}
+                        aria-label="Chat input"
                     />
                     <button
                         onClick={handleSend}
                         disabled={isLoading || input.trim() === ''}
                         className="p-3 text-blue-600 disabled:text-gray-300 hover:bg-blue-100 rounded-r-xl transition-colors"
+                        aria-label="Send message"
                     >
                         <SendIcon />
                     </button>
@@ -201,6 +222,7 @@ export default function App() {
 
     return (
         <div className="h-screen bg-white font-sans flex flex-col">
+            <Header />
             <main className="flex-1 flex flex-col overflow-hidden">
                  <ChatInterface key={chatKey} onNewChat={handleNewChat} />
             </main>
