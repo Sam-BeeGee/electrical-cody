@@ -28,8 +28,19 @@ const NewChatIcon = () => (
 );
 
 // --- New Header Component ---
-const Header = ({ assistant }) => (
-    <header className="flex items-center p-4 border-b border-gray-200 bg-white">
+const Header = ({ assistant, onToggleSidebar }) => (
+    <header className="flex items-center p-4 border-b border-gray-200 bg-white relative">
+        <button
+            onClick={onToggleSidebar}
+            className="md:hidden mr-4 p-2 rounded-md hover:bg-gray-100"
+            aria-label="Toggle sidebar"
+        >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+        </button>
         <div className="flex items-center gap-3">
             <assistant.Icon />
             <div>
@@ -193,8 +204,8 @@ const ChatInterface = ({ onNewChat, assistant }) => {
 
 
 // --- Sidebar Component ---
-const Sidebar = ({ assistants, selectedAssistant, onSelectAssistant }) => (
-    <aside className="w-64 bg-gray-50 border-r border-gray-200 p-4 flex flex-col gap-2">
+const Sidebar = ({ assistants, selectedAssistant, onSelectAssistant, isOpen }) => (
+    <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-gray-50 border-r border-gray-200 p-4 flex-col gap-2 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'flex translate-x-0' : 'hidden -translate-x-full'} md:flex`}>
         <h2 className="text-lg font-semibold text-gray-800 mb-2">Trades</h2>
         {assistants.map(assistant => (
             <button
@@ -218,6 +229,7 @@ const Sidebar = ({ assistants, selectedAssistant, onSelectAssistant }) => (
 export default function App() {
     const [chatKey, setChatKey] = useState(0);
     const [selectedAssistant, setSelectedAssistant] = useState(assistants[0]);
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
 
     // This function resets the chat by changing the key of the ChatInterface component,
     // which forces React to remount it with a fresh state.
@@ -228,19 +240,31 @@ export default function App() {
     const handleSelectAssistant = (assistant) => {
         setSelectedAssistant(assistant);
         handleNewChat();
+        setSidebarOpen(false); // Close sidebar on selection (for mobile)
+    };
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!isSidebarOpen);
     };
 
     return (
-        <div className="h-screen bg-white font-sans flex">
+        <div className="h-screen bg-white font-sans flex relative overflow-hidden md:overflow-auto">
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+                    onClick={toggleSidebar}
+                ></div>
+            )}
             <Sidebar
                 assistants={assistants}
                 selectedAssistant={selectedAssistant}
                 onSelectAssistant={handleSelectAssistant}
+                isOpen={isSidebarOpen}
             />
             <div className="flex-1 flex flex-col">
-                <Header assistant={selectedAssistant} />
+                <Header assistant={selectedAssistant} onToggleSidebar={toggleSidebar} />
                 <main className="flex-1 flex flex-col overflow-hidden">
-                     <ChatInterface key={chatKey} onNewChat={handleNewChat} assistant={selectedAssistant} />
+                    <ChatInterface key={chatKey} onNewChat={handleNewChat} assistant={selectedAssistant} />
                 </main>
             </div>
         </div>
