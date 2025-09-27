@@ -13,16 +13,15 @@ const SendIcon = () => (
 // Updated icon for the AI assistant, "Electrical Cody"
 const BotIcon = () => (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="14" fill="#4A90E2"/>
+        <circle cx="16" cy="16" r="14" fill="#16a34a"/>
         <path d="M17 6L9 18H15L15 26L23 14H17L17 6Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 
-// Updated icon for the user
+// Updated icon for the user, "Apprentice"
 const UserIcon = () => (
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="8" r="4" fill="currentColor" opacity="0.6"/>
-        <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="currentColor" opacity="0.6"/>
+        <path d="M4 12C4 7.58172 7.58172 4 12 4H20V8H12C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16H18V20H12C7.58172 20 4 16.4183 4 12Z" fill="currentColor" opacity="0.6" />
     </svg>
 );
 
@@ -142,7 +141,7 @@ const ChatInterface = ({ onNewChat }) => {
                                 <BotIcon />
                             </div>
                         )}
-                        <div className={`max-w-xl p-3 px-4 rounded-2xl ${msg.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                        <div className={`max-w-xl p-3 px-4 rounded-2xl ${msg.isUser ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
                             {msg.isUser ? (
                                 <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
                             ) : (
@@ -165,9 +164,9 @@ const ChatInterface = ({ onNewChat }) => {
                         </div>
                         <div className="max-w-lg p-3 px-4 rounded-2xl bg-gray-100 text-gray-800">
                            <div className="flex items-center space-x-1.5">
-                               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse delay-100"></div>
-                               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse delay-200"></div>
+                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse delay-100"></div>
+                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse delay-200"></div>
                            </div>
                         </div>
                     </div>
@@ -177,10 +176,10 @@ const ChatInterface = ({ onNewChat }) => {
 
             {/* Input Form */}
             <div className="p-4 bg-white/80 backdrop-blur-sm border-t border-gray-200">
-                <div className="flex items-center bg-gray-100 rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                <div className="flex items-center bg-gray-100 rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-green-500 transition-all">
                     <button
                         onClick={onNewChat}
-                        className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-l-xl transition-colors"
+                        className="p-3 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded-l-xl transition-colors"
                         aria-label="Start new chat"
                     >
                         <NewChatIcon />
@@ -198,7 +197,7 @@ const ChatInterface = ({ onNewChat }) => {
                     <button
                         onClick={handleSend}
                         disabled={isLoading || input.trim() === ''}
-                        className="p-3 text-blue-600 disabled:text-gray-300 hover:bg-blue-100 rounded-r-xl transition-colors"
+                        className="p-3 text-green-600 disabled:text-gray-300 hover:bg-green-100 rounded-r-xl transition-colors"
                         aria-label="Send message"
                     >
                         <SendIcon />
