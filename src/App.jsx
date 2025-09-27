@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Markdown from 'markdown-to-jsx';
+import { assistants } from './assistants.jsx';
 
 // --- Helper Components ---
 
@@ -7,14 +8,6 @@ import Markdown from 'markdown-to-jsx';
 const SendIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-500">
         <path d="M3.4 20.4L20.85 12.02L3.4 3.6V10.1L17.2 12L3.4 13.9V20.4Z" fill="currentColor"/>
-    </svg>
-);
-
-// Updated icon for the AI assistant, "Electrical Cody"
-const BotIcon = () => (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="14" fill="#16a34a"/>
-        <path d="M17 6L9 18H15L15 26L23 14H17L17 6Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 
@@ -35,13 +28,13 @@ const NewChatIcon = () => (
 );
 
 // --- New Header Component ---
-const Header = () => (
+const Header = ({ assistant }) => (
     <header className="flex items-center p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
-            <BotIcon />
+            <assistant.Icon />
             <div>
-                <h1 className="text-lg font-bold text-gray-800">Electrical Cody</h1>
-                <p className="text-sm text-gray-500">Your AI Master Electrician</p>
+                <h1 className="text-lg font-bold text-gray-800">{assistant.name}</h1>
+                <p className="text-sm text-gray-500">{assistant.title}</p>
             </div>
         </div>
     </header>
@@ -50,21 +43,22 @@ const Header = () => (
 // --- Main Components ---
 
 // Main chat interface
-const ChatInterface = ({ onNewChat }) => {
+const ChatInterface = ({ onNewChat, assistant }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const chatEndRef = useRef(null);
+    const BotIcon = assistant.Icon;
 
-    // Effect to add initial welcome message from Electrical Cody
+    // Effect to add initial welcome message from the selected assistant
     useEffect(() => {
         setMessages([
             {
-                text: "Hello! I'm Electrical Cody, your virtual master electrician. Ask me about code, calculations, or Revit. How can I help?",
+                text: `Hello! I'm ${assistant.name}, your virtual ${assistant.title.toLowerCase()}. How can I help you today?`,
                 isUser: false
             }
         ]);
-    }, []);
+    }, [assistant]);
 
     // Effect to scroll to the bottom of the chat on new messages
     useEffect(() => {
@@ -87,18 +81,7 @@ const ChatInterface = ({ onNewChat }) => {
                 throw new Error("API key is missing. Please make sure you have set up the VITE_GEMINI_API_KEY environment variable in your Vercel project settings.");
             }
 
-            const systemPrompt = `You are "Electrical Cody," an AI virtual assistant with the knowledge and persona of a seasoned Master Electrician. Your goal is to be an expert in electrical code, theory, installation, project management, and construction management. When a user asks a question, follow these steps:
-1.  **Analyze the User's Need:** Is this a field electrician asking about installation, a project manager asking about scheduling, or a detailer asking about design/modeling? Tailor your response accordingly.
-2.  **Determine the Topic:**
-    * **Code Interpretation:** If it's about code, reference the NEC 2023 by default, or the specific state code (WA, OR, CA) if mentioned. Always cite the article (e.g., NEC 210.52(C)(1)). Use markdown for code blocks.
-    * **Electrical Calculations:** If asked to perform a calculation (e.g., voltage drop, conduit fill, box fill, load calculations, motor branch circuits), perform the calculation accurately and, most importantly, show the step-by-step process, including the formulas and code articles used. Use markdown for code blocks.
-    * **Installation Best Practices:** Provide practical, safe, and efficient installation guidance for common electrical systems and equipment.
-    * **Project Management:** Offer insights on project planning, scheduling, resource allocation, and risk management specific to electrical construction.
-    * **Construction Management:** Advise on site logistics, team coordination, safety protocols, and quality control for electrical projects.
-    * **Revit/VDC:** If it's about Revit, provide clear, practical workflows for electrical detailers.
-    * **Electrical Theory:** If it's about a fundamental concept (Ohm's Law, 3-phase power, etc.), explain it clearly and concisely, as a master electrician would to an apprentice.
-3.  **Prioritize Safety and Best Practices:** Frame your answers with a focus on safety, efficiency, and professional, code-compliant methods.
-4.  **Be Clear and Concise:** Provide accurate, easy-to-understand answers. Use markdown for formatting. Avoid jargon where possible, or explain it if necessary.`;
+            const systemPrompt = assistant.systemPrompt;
 
             let chatHistory = [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser question: " + input }] }];
             const payload = { contents: chatHistory };
@@ -209,9 +192,32 @@ const ChatInterface = ({ onNewChat }) => {
 };
 
 
+// --- Sidebar Component ---
+const Sidebar = ({ assistants, selectedAssistant, onSelectAssistant }) => (
+    <aside className="w-64 bg-gray-50 border-r border-gray-200 p-4 flex flex-col gap-2">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">Trades</h2>
+        {assistants.map(assistant => (
+            <button
+                key={assistant.id}
+                onClick={() => onSelectAssistant(assistant)}
+                className={`flex items-center gap-3 p-2 rounded-lg text-left w-full transition-colors ${
+                    selectedAssistant.id === assistant.id
+                        ? 'bg-green-100 text-green-800'
+                        : 'hover:bg-gray-200 text-gray-600'
+                }`}
+            >
+                <assistant.Icon />
+                <span className="font-medium">{assistant.name}</span>
+            </button>
+        ))}
+    </aside>
+);
+
+
 // --- App Component ---
 export default function App() {
     const [chatKey, setChatKey] = useState(0);
+    const [selectedAssistant, setSelectedAssistant] = useState(assistants[0]);
 
     // This function resets the chat by changing the key of the ChatInterface component,
     // which forces React to remount it with a fresh state.
@@ -219,12 +225,24 @@ export default function App() {
         setChatKey(prevKey => prevKey + 1);
     };
 
+    const handleSelectAssistant = (assistant) => {
+        setSelectedAssistant(assistant);
+        handleNewChat();
+    };
+
     return (
-        <div className="h-screen bg-white font-sans flex flex-col">
-            <Header />
-            <main className="flex-1 flex flex-col overflow-hidden">
-                 <ChatInterface key={chatKey} onNewChat={handleNewChat} />
-            </main>
+        <div className="h-screen bg-white font-sans flex">
+            <Sidebar
+                assistants={assistants}
+                selectedAssistant={selectedAssistant}
+                onSelectAssistant={handleSelectAssistant}
+            />
+            <div className="flex-1 flex flex-col">
+                <Header assistant={selectedAssistant} />
+                <main className="flex-1 flex flex-col overflow-hidden">
+                     <ChatInterface key={chatKey} onNewChat={handleNewChat} assistant={selectedAssistant} />
+                </main>
+            </div>
         </div>
     );
 }
