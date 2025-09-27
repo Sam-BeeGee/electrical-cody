@@ -197,10 +197,18 @@ const ChatInterface = ({ onNewChat, assistant }) => {
                         <SendIcon />
                     </button>
                 </div>
+                <Disclaimer />
             </div>
         </div>
     );
 };
+
+// --- Disclaimer Component ---
+const Disclaimer = () => (
+    <p className="text-xs text-gray-400 text-center pt-3 px-4">
+        AI-generated content may be inaccurate. Always verify critical information with official code documents and consult a qualified professional.
+    </p>
+);
 
 
 // --- Sidebar Component ---
