@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Markdown from 'markdown-to-jsx';
-import { assistants } from './assistants.jsx';
+import { assistants } from './assistants.js';
 
 // --- Helper Components ---
 
@@ -97,7 +97,7 @@ const ChatInterface = ({ onNewChat, assistant }) => {
             let chatHistory = [{ role: "user", parts: [{ text: systemPrompt + "\n\nUser question: " + input }] }];
             const payload = { contents: chatHistory };
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -118,7 +118,10 @@ const ChatInterface = ({ onNewChat, assistant }) => {
 
         } catch (error) {
             console.error("Error fetching AI response:", error);
-            setMessages(prev => [...prev, { text: `${error.message}`, isUser: false }]);
+            const friendlyErrorMessage = error.message.includes("API key is missing")
+                ? "It looks like the API key is missing. The owner of this site needs to add their Gemini API key to the project's environment variables to enable the chat."
+                : `An error occurred: ${error.message}. Please try again later.`;
+            setMessages(prev => [...prev, { text: friendlyErrorMessage, isUser: false }]);
         } finally {
             setIsLoading(false);
         }
