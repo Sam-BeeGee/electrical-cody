@@ -1,6 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Markdown from 'markdown-to-jsx';
-import { assistants } from './assistants.jsx';
+import { assistants } from './assistants.js';
+
+// --- Rate Limit Helpers ---
+const RATE_LIMIT = 30;
+const STORAGE_KEY = 'cody_usage';
+
+const checkRateLimit = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const usageStr = localStorage.getItem(STORAGE_KEY);
+
+    let usage = { date: today, count: 0 };
+
+    if (usageStr) {
+        try {
+            const parsed = JSON.parse(usageStr);
+            if (parsed.date === today) {
+                usage = parsed;
+            }
+        } catch {
+            // invalid json, ignore
+        }
+    }
+
+    // Save back to ensure it exists or is reset
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(usage));
+
+    return usage.count < RATE_LIMIT;
+};
+
+const incrementRateLimit = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const usageStr = localStorage.getItem(STORAGE_KEY);
+    let usage = { date: today, count: 0 };
+
+    if (usageStr) {
+        try {
+            const parsed = JSON.parse(usageStr);
+            if (parsed.date === today) {
+                usage = parsed;
+            }
+        } catch {
+             // invalid json, ignore
+        }
+    }
+
+    usage.count += 1;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(usage));
+};
 
 // --- Helper Components ---
 
@@ -26,6 +73,61 @@ const NewChatIcon = () => (
         <path d="M17 2L21 6L17 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
+
+// --- Captcha Component ---
+const CaptchaModal = ({ onVerify }) => {
+    const [num1, setNum1] = useState(0);
+    const [num2, setNum2] = useState(0);
+    const [answer, setAnswer] = useState('');
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        setNum1(Math.floor(Math.random() * 10) + 1);
+        setNum2(Math.floor(Math.random() * 10) + 1);
+    }, []);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (parseInt(answer) === num1 + num2) {
+            onVerify();
+        } else {
+            setError(true);
+            setAnswer('');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 p-4">
+            <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Security Check</h2>
+                <p className="text-gray-600 mb-6">Please solve this math problem to continue:</p>
+                <div className="text-3xl font-mono font-bold text-green-600 mb-6">
+                    {num1} + {num2} = ?
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        type="number"
+                        value={answer}
+                        onChange={(e) => {
+                            setAnswer(e.target.value);
+                            setError(false);
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-center text-lg"
+                        placeholder="Enter answer"
+                        autoFocus
+                    />
+                    {error && <p className="text-red-500 text-sm">Incorrect answer. Please try again.</p>}
+                    <button
+                        type="submit"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors"
+                    >
+                        Verify
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
 
 // --- New Header Component ---
 const Header = ({ assistant, onToggleSidebar }) => (
@@ -79,10 +181,20 @@ const ChatInterface = ({ onNewChat, assistant }) => {
     const handleSend = async () => {
         if (input.trim() === '' || isLoading) return;
 
+        // --- Rate Limit Check ---
+        if (!checkRateLimit()) {
+            setMessages(prev => [...prev, { text: "You have reached your daily limit of 30 questions. Please come back tomorrow!", isUser: false }]);
+            return;
+        }
+
         const userMessage = { text: input, isUser: true };
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
+
+        // --- Rate Limit Increment ---
+        // Incrementing here means we count the attempt.
+        incrementRateLimit();
 
         // --- AI Integration with Auto-Topic Detection ---
         try {
@@ -230,6 +342,19 @@ export default function App() {
     const [chatKey, setChatKey] = useState(0);
     const [selectedAssistant, setSelectedAssistant] = useState(assistants[0]);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [isVerified, setIsVerified] = useState(false);
+
+    useEffect(() => {
+        const verified = sessionStorage.getItem('cody_verified');
+        if (verified === 'true') {
+            setIsVerified(true);
+        }
+    }, []);
+
+    const handleVerify = () => {
+        setIsVerified(true);
+        sessionStorage.setItem('cody_verified', 'true');
+    };
 
     // This function resets the chat by changing the key of the ChatInterface component,
     // which forces React to remount it with a fresh state.
@@ -249,6 +374,7 @@ export default function App() {
 
     return (
         <div className="h-screen bg-white font-sans flex relative overflow-hidden md:overflow-auto">
+            {!isVerified && <CaptchaModal onVerify={handleVerify} />}
             {isSidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
