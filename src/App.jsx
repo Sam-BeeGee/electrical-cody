@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Markdown from 'markdown-to-jsx';
+import { Analytics } from '@vercel/analytics/react';
 import { assistants } from './assistants.jsx';
 
 // --- Helper Components ---
@@ -267,6 +268,7 @@ export default function App() {
                     <ChatInterface key={chatKey} onNewChat={handleNewChat} assistant={selectedAssistant} />
                 </main>
             </div>
+            <Analytics />
         </div>
     );
 }
