@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Markdown from 'markdown-to-jsx';
-import { assistants } from './assistants.jsx';
+import { assistants } from './assistants';
+import Verification from './components/Verification.jsx';
 
 // --- Helper Components ---
 
@@ -227,9 +228,22 @@ const Sidebar = ({ assistants, selectedAssistant, onSelectAssistant, isOpen }) =
 
 // --- App Component ---
 export default function App() {
+    const [isVerified, setIsVerified] = useState(false);
     const [chatKey, setChatKey] = useState(0);
     const [selectedAssistant, setSelectedAssistant] = useState(assistants[0]);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        const verified = sessionStorage.getItem('cody_verified');
+        if (verified === 'true') {
+            setIsVerified(true);
+        }
+    }, []);
+
+    const handleVerification = () => {
+        setIsVerified(true);
+        sessionStorage.setItem('cody_verified', 'true');
+    };
 
     // This function resets the chat by changing the key of the ChatInterface component,
     // which forces React to remount it with a fresh state.
@@ -246,6 +260,10 @@ export default function App() {
     const toggleSidebar = () => {
         setSidebarOpen(!isSidebarOpen);
     };
+
+    if (!isVerified) {
+        return <Verification onVerify={handleVerification} />;
+    }
 
     return (
         <div className="h-screen bg-white font-sans flex relative overflow-hidden md:overflow-auto">
