@@ -29,25 +29,30 @@ const NewChatIcon = () => (
 );
 
 // --- New Header Component ---
-const Header = ({ assistant, onToggleSidebar }) => (
-    <header className="flex items-center p-4 border-b border-gray-200 bg-white relative">
-        <button
-            onClick={onToggleSidebar}
-            className="md:hidden mr-4 p-2 rounded-md hover:bg-gray-100"
-            aria-label="Toggle sidebar"
-        >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-        </button>
-        <div className="flex items-center gap-3">
-            <assistant.Icon />
-            <div>
-                <h1 className="text-lg font-bold text-gray-800">{assistant.name}</h1>
-                <p className="text-sm text-gray-500">{assistant.title}</p>
+const Header = ({ assistant, onToggleSidebar, usageCount, usageLimit }) => (
+    <header className="flex items-center justify-between p-4 border-b border-gray-200 bg-white relative">
+        <div className="flex items-center">
+            <button
+                onClick={onToggleSidebar}
+                className="md:hidden mr-4 p-2 rounded-md hover:bg-gray-100"
+                aria-label="Toggle sidebar"
+            >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+            </button>
+            <div className="flex items-center gap-3">
+                <assistant.Icon />
+                <div>
+                    <h1 className="text-lg font-bold text-gray-800">{assistant.name}</h1>
+                    <p className="text-sm text-gray-500">{assistant.title}</p>
+                </div>
             </div>
+        </div>
+        <div className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+            {usageCount}/{usageLimit} daily
         </div>
     </header>
 );
@@ -55,7 +60,7 @@ const Header = ({ assistant, onToggleSidebar }) => (
 // --- Main Components ---
 
 // Main chat interface
-const ChatInterface = ({ onNewChat, assistant }) => {
+const ChatInterface = ({ onNewChat, assistant, checkRateLimit, incrementUsage }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -80,10 +85,21 @@ const ChatInterface = ({ onNewChat, assistant }) => {
     const handleSend = async () => {
         if (input.trim() === '' || isLoading) return;
 
+        if (!checkRateLimit()) {
+            setMessages(prev => [...prev, { text: input, isUser: true }]);
+            setInput('');
+            setMessages(prev => [...prev, {
+                text: "You have reached your daily limit of 30 messages. Please try again tomorrow.",
+                isUser: false
+            }]);
+            return;
+        }
+
         const userMessage = { text: input, isUser: true };
         setMessages(prev => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
+        incrementUsage();
 
         // --- AI Integration with Auto-Topic Detection ---
         try {
@@ -232,13 +248,56 @@ export default function App() {
     const [chatKey, setChatKey] = useState(0);
     const [selectedAssistant, setSelectedAssistant] = useState(assistants[0]);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [usageCount, setUsageCount] = useState(0);
+    const USAGE_LIMIT = 30;
 
     useEffect(() => {
         const verified = sessionStorage.getItem('cody_verified');
         if (verified === 'true') {
             setIsVerified(true);
         }
+
+        // Initialize or read usage
+        const today = new Date().toDateString();
+        const usageData = JSON.parse(localStorage.getItem('cody_usage') || '{}');
+
+        if (usageData.date === today) {
+            setUsageCount(usageData.count || 0);
+        } else {
+            // Reset if new day
+            localStorage.setItem('cody_usage', JSON.stringify({ date: today, count: 0 }));
+            setUsageCount(0);
+        }
     }, []);
+
+    const checkRateLimit = () => {
+        const today = new Date().toDateString();
+        const usageData = JSON.parse(localStorage.getItem('cody_usage') || '{}');
+
+        if (usageData.date !== today) {
+            // Should have been reset by effect, but double check
+            localStorage.setItem('cody_usage', JSON.stringify({ date: today, count: 0 }));
+            setUsageCount(0);
+            return true;
+        }
+
+        return (usageData.count || 0) < USAGE_LIMIT;
+    };
+
+    const incrementUsage = () => {
+        const today = new Date().toDateString();
+        const usageData = JSON.parse(localStorage.getItem('cody_usage') || '{}');
+        let newCount = 0;
+
+        if (usageData.date === today) {
+            newCount = (usageData.count || 0) + 1;
+        } else {
+            newCount = 1;
+        }
+
+        localStorage.setItem('cody_usage', JSON.stringify({ date: today, count: newCount }));
+        setUsageCount(newCount);
+    };
 
     const handleVerification = () => {
         setIsVerified(true);
@@ -280,9 +339,20 @@ export default function App() {
                 isOpen={isSidebarOpen}
             />
             <div className="flex-1 flex flex-col">
-                <Header assistant={selectedAssistant} onToggleSidebar={toggleSidebar} />
+                <Header
+                    assistant={selectedAssistant}
+                    onToggleSidebar={toggleSidebar}
+                    usageCount={usageCount}
+                    usageLimit={USAGE_LIMIT}
+                />
                 <main className="flex-1 flex flex-col overflow-hidden">
-                    <ChatInterface key={chatKey} onNewChat={handleNewChat} assistant={selectedAssistant} />
+                    <ChatInterface
+                        key={chatKey}
+                        onNewChat={handleNewChat}
+                        assistant={selectedAssistant}
+                        checkRateLimit={checkRateLimit}
+                        incrementUsage={incrementUsage}
+                    />
                 </main>
             </div>
         </div>
