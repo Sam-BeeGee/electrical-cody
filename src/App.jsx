@@ -30,10 +30,10 @@ const NewChatIcon = () => (
 
 // --- New Header Component ---
 const Header = ({ assistant, onToggleSidebar }) => (
-    <header className="flex items-center p-4 border-b border-gray-200 bg-white relative">
+    <header className="flex items-center p-4 border-b border-gray-100 bg-white sticky top-0 z-10 shadow-sm">
         <button
             onClick={onToggleSidebar}
-            className="md:hidden mr-4 p-2 rounded-md hover:bg-gray-100"
+            className="md:hidden mr-3 p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             aria-label="Toggle sidebar"
         >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -43,11 +43,16 @@ const Header = ({ assistant, onToggleSidebar }) => (
             </svg>
         </button>
         <div className="flex items-center gap-3">
-            <assistant.Icon />
+             <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                <assistant.Icon />
+             </div>
             <div>
-                <h1 className="text-lg font-bold text-gray-800">{assistant.name}</h1>
-                <p className="text-sm text-gray-500">{assistant.title}</p>
+                <h1 className="text-lg font-bold text-gray-900 leading-tight">{assistant.name}</h1>
+                <p className="text-sm text-gray-500 leading-tight">{assistant.title}</p>
             </div>
+        </div>
+        <div className="ml-auto">
+             {/* Placeholder for future actions */}
         </div>
     </header>
 );
@@ -126,77 +131,100 @@ const ChatInterface = ({ onNewChat, assistant }) => {
     };
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full bg-white relative">
             {/* Message Display */}
-            <div className="flex-1 p-6 space-y-6 overflow-y-auto" aria-live="polite">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`flex items-start gap-3 ${msg.isUser ? 'justify-end' : ''}`}>
-                        {!msg.isUser && (
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center">
+            <div className="flex-1 overflow-y-auto" aria-live="polite">
+                <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+                    {messages.map((msg, index) => (
+                        <div key={index} className={`flex items-start gap-4 ${msg.isUser ? 'flex-row-reverse' : ''}`}>
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${msg.isUser ? 'bg-gray-200 text-gray-600' : 'bg-green-100 text-green-700'}`}>
+                                {msg.isUser ? <UserIcon /> : <BotIcon />}
+                            </div>
+
+                            <div className={`flex flex-col max-w-[85%] sm:max-w-[75%] ${msg.isUser ? 'items-end' : 'items-start'}`}>
+                                <div className={`px-5 py-3.5 rounded-2xl shadow-sm ${
+                                    msg.isUser
+                                        ? 'bg-green-600 text-white rounded-tr-none'
+                                        : 'bg-white border border-gray-100 text-gray-800 rounded-tl-none shadow-md'
+                                }`}>
+                                    {msg.isUser ? (
+                                        <p className="whitespace-pre-wrap text-[15px] leading-relaxed">{msg.text}</p>
+                                    ) : (
+                                        <div className="prose prose-sm max-w-none prose-p:text-[15px] prose-p:leading-relaxed prose-headings:font-semibold prose-a:text-green-600">
+                                            <Markdown>{msg.text}</Markdown>
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-[10px] text-gray-300 mt-1 px-1">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                        </div>
+                    ))}
+                    {isLoading && (
+                        <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700">
                                 <BotIcon />
                             </div>
-                        )}
-                        <div className={`max-w-xl p-3 px-4 rounded-2xl ${msg.isUser ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                            {msg.isUser ? (
-                                <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
-                            ) : (
-                                <div className="prose prose-sm max-w-none">
-                                    <Markdown>{msg.text}</Markdown>
-                                </div>
-                            )}
-                        </div>
-                         {msg.isUser && (
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                                <UserIcon />
+                            <div className="px-5 py-4 rounded-2xl rounded-tl-none bg-white border border-gray-100 shadow-md">
+                               <div className="flex items-center space-x-1.5">
+                                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce"></div>
+                                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce delay-100"></div>
+                                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-bounce delay-200"></div>
+                               </div>
                             </div>
-                        )}
-                    </div>
-                ))}
-                {isLoading && (
-                    <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center">
-                            <BotIcon />
                         </div>
-                        <div className="max-w-lg p-3 px-4 rounded-2xl bg-gray-100 text-gray-800">
-                           <div className="flex items-center space-x-1.5">
-                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse delay-100"></div>
-                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse delay-200"></div>
-                           </div>
-                        </div>
-                    </div>
-                )}
-                <div ref={chatEndRef} />
+                    )}
+                    <div ref={chatEndRef} />
+                </div>
             </div>
 
             {/* Input Form */}
-            <div className="p-4 bg-white/80 backdrop-blur-sm border-t border-gray-200">
-                <div className="flex items-center bg-gray-100 rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-green-500 transition-all">
-                    <button
-                        onClick={onNewChat}
-                        className="p-3 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded-l-xl transition-colors"
-                        aria-label="Start new chat"
-                    >
-                        <NewChatIcon />
-                    </button>
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder='Ask a code question, run a calculation, or get Revit help...'
-                        className="flex-1 p-3 bg-transparent border-l border-gray-200 focus:ring-0 text-sm"
-                        disabled={isLoading}
-                        aria-label="Chat input"
-                    />
-                    <button
-                        onClick={handleSend}
-                        disabled={isLoading || input.trim() === ''}
-                        className="p-3 text-green-600 disabled:text-gray-300 hover:bg-green-100 rounded-r-xl transition-colors"
-                        aria-label="Send message"
-                    >
-                        <SendIcon />
-                    </button>
+            <div className="border-t border-gray-100 bg-white/90 backdrop-blur-md p-4 sticky bottom-0 z-10">
+                <div className="max-w-3xl mx-auto relative">
+                     {messages.length > 2 && (
+                         <button
+                            onClick={onNewChat}
+                            className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-1.5 rounded-full shadow-lg hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+                         >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            New Chat
+                        </button>
+                     )}
+
+                    <div className="flex items-end bg-gray-50 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500 transition-all shadow-sm overflow-hidden">
+                        <button
+                            onClick={onNewChat}
+                            className="p-3.5 text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors border-r border-gray-200"
+                            title="Start new chat"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                        <textarea
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSend();
+                                }
+                            }}
+                            placeholder='Ask a question...'
+                            className="flex-1 p-3.5 bg-transparent border-none focus:ring-0 text-sm resize-none max-h-32 min-h-[50px] leading-relaxed"
+                            disabled={isLoading}
+                            rows={1}
+                            style={{minHeight: '48px'}}
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={isLoading || input.trim() === ''}
+                            className="p-3 m-1 text-white bg-green-600 rounded-xl disabled:bg-gray-200 disabled:text-gray-400 hover:bg-green-700 transition-all shadow-sm"
+                            aria-label="Send message"
+                        >
+                            <SendIcon />
+                        </button>
+                    </div>
+                    <div className="text-center mt-2">
+                        <p className="text-[10px] text-gray-400">AI can make mistakes. Please verify important information.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -206,22 +234,44 @@ const ChatInterface = ({ onNewChat, assistant }) => {
 
 // --- Sidebar Component ---
 const Sidebar = ({ assistants, selectedAssistant, onSelectAssistant, isOpen }) => (
-    <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-gray-50 border-r border-gray-200 p-4 flex-col gap-2 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'flex translate-x-0' : 'hidden -translate-x-full'} md:flex`}>
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Trades</h2>
-        {assistants.map(assistant => (
-            <button
-                key={assistant.id}
-                onClick={() => onSelectAssistant(assistant)}
-                className={`flex items-center gap-3 p-2 rounded-lg text-left w-full transition-colors ${
-                    selectedAssistant.id === assistant.id
-                        ? 'bg-green-100 text-green-800'
-                        : 'hover:bg-gray-200 text-gray-600'
-                }`}
-            >
-                <assistant.Icon />
-                <span className="font-medium">{assistant.name}</span>
-            </button>
-        ))}
+    <aside className={`fixed inset-y-0 left-0 z-30 w-72 bg-gray-900 text-gray-300 p-4 flex flex-col gap-2 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'flex translate-x-0' : 'hidden -translate-x-full'} md:flex shadow-xl md:shadow-none`}>
+        <div className="mb-8 px-2 mt-2">
+            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <span className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.5 7.5"></path><path d="M12 12l9.5-4.5"></path></svg>
+                </span>
+                Assistants
+            </h2>
+        </div>
+
+        <div className="space-y-1">
+            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Available Experts</h3>
+            {assistants.map(assistant => (
+                <button
+                    key={assistant.id}
+                    onClick={() => onSelectAssistant(assistant)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left w-full transition-all duration-200 group ${
+                        selectedAssistant.id === assistant.id
+                            ? 'bg-gray-800 text-white shadow-sm ring-1 ring-white/10'
+                            : 'hover:bg-gray-800/50 hover:text-white'
+                    }`}
+                >
+                    <div className={`p-1.5 rounded-md ${selectedAssistant.id === assistant.id ? 'bg-gray-700 text-green-400' : 'bg-gray-800 text-gray-400 group-hover:text-gray-300 group-hover:bg-gray-700'}`}>
+                        <assistant.Icon />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-medium text-sm">{assistant.name}</span>
+                        <span className="text-xs text-gray-500 truncate max-w-[140px]">{assistant.title}</span>
+                    </div>
+                </button>
+            ))}
+        </div>
+
+        <div className="mt-auto pt-4 border-t border-gray-800">
+             <div className="px-3 py-2">
+                <p className="text-xs text-gray-500">© 2024 AI Assistants</p>
+             </div>
+        </div>
     </aside>
 );
 
